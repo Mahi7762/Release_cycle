@@ -26,10 +26,10 @@ pipeline {
 		           }
             stage('Run Docker Container') {
             steps {
-                sh '''docker rm -f  my-httpd3'''
+                //sh '''docker rm -f  my-httpd3'''
 
                 sh ''' 
-                    docker run -d --name my-httpd3 -p 8081:80 httpd:latest
+                    docker run -d --name my-httpd3 -p 8083:80 httpd:latest
                 '''
             }
         }
