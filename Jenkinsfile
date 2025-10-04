@@ -26,7 +26,7 @@ pipeline {
 		           }
             stage('Run Docker Container') {
             steps {
-                //sh '''docker rm -f  my-httpd2'''
+                sh '''docker rm -f  my-httpd2'''
 
                 sh ''' 
                     docker run -d --name my-httpd2 -p 8082:80 httpd:latest
