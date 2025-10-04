@@ -17,13 +17,8 @@ pipeline {
 			   }
 		       }
 		       
-		           stage('Build Docker Image') {
-            steps {
-                sh '''
-                    docker pull ubuntu:latest
-                '''
-            }
-		           }
+		
+		           
             stage('Run Docker Container') {
             steps {
                 sh '''docker rm -f  my-httpd'''
