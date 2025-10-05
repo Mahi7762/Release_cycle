@@ -1,52 +1,39 @@
-node {
-    stage('Git Checkout') {
-        git branch: '25Q1', url: 'https://github.com/Mahi7762/Release_cycle.git'
-    }
+pipeline {
+        agent any
+        
+		
+		stages {
+		       stage("Git Checkout") {
+			   
+			     steps{
+			         git branch: '25Q1', url: 'https://github.com/Mahi7762/Release_cycle.git'
+			   }
+		    } 
+		        stage("Copy to HTTPD") {
+			   
+			     steps{
+			        sh '''sudo cp /root/.jenkins/workspace/25Q1/index.html /var/www/html/
+			            sudo chmod -R 777 /var/www/html/index.html'''
+			   }
+		       }
+		       
+		
+		           
+            stage('Run Docker Container') {
+            steps {
+                sh '''docker rm -f  my-httpd'''
 
-    stage('Copy to HTTPD (Local)') {
-        sh '''
-            sudo cp /root/.jenkins/workspace/25Q1/index.html /var/www/html/
-            sudo chmod -R 777 /var/www/html/index.html
-        '''
-    }
-
-    stage('Build Ubuntu Docker Image with HTTPS') {
-        writeFile file: 'Dockerfile', text: '''
-            FROM ubuntu:latest
-            RUN apt-get update && \
-                apt-get install -y apache2 openssl && \
-                mkdir -p /etc/apache2/ssl && \
-                openssl req -x509 -nodes -days 365 \
-                  -subj "/C=IN/ST=Maharashtra/L=Pune/O=DevOps/CN=localhost" \
-                  -newkey rsa:2048 \
-                  -keyout /etc/apache2/ssl/apache.key \
-                  -out /etc/apache2/ssl/apache.crt && \
-                a2enmod ssl && \
-                echo "<VirtualHost *:443>
-                    SSLEngine on
-                    SSLCertificateFile /etc/apache2/ssl/apache.crt
-                    SSLCertificateKeyFile /etc/apache2/ssl/apache.key
-                    DocumentRoot /var/www/html
-                </VirtualHost>" > /etc/apache2/sites-available/default-ssl.conf && \
-                a2ensite default-ssl && \
-                systemctl enable apache2
-
-            COPY index.html /var/www/html/index.html
-            EXPOSE 443
-            CMD ["apachectl", "-D", "FOREGROUND"]
-        '''
-        sh 'docker build -t ubuntu-https:latest .'
-    }
-
-    stage('Run Ubuntu Container with HTTPS') {
-        sh '''
-            docker rm -f my-ubuntu-https || true
-            docker run -d --name my-ubuntu-https -p 8443:443 ubuntu-https:latest
-        '''
-    }
-
-    stage('Access Info') {
-        echo "✅ Container running with HTTPS on port 8443"
-        echo "👉 Access it using: https://<your-server-ip>:8443"
-    }
+                sh ''' 
+                    docker run -d --name my-httpd -p 8081:80 httpd:latest
+                '''
+            }
+        }
+		        stage("COPY File to HTTPD") {
+			   
+			     steps{
+			        sh '''docker cp /root/.jenkins/workspace/25Q1/index.html my-httpd:/usr/local/apache2/htdocs/'''
+			        sh '''docker exec my-httpd chmod 644 /usr/local/apache2/htdocs/index.html'''
+			   }
+		       }
+		}	
 }
